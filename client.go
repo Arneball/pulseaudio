@@ -65,12 +65,8 @@ type Client struct {
 }
 
 // NewClient establishes a connection to the PulseAudio server.
-func NewClient(addressArr ...string) (*Client, error) {
-	if len(addressArr) < 1 {
-		addressArr = []string{defaultAddr}
-	}
-
-	conn, err := net.Dial("unix", addressArr[0])
+func NewClient(network, host string) (*Client, error) {
+	conn, err := net.Dial(network, host)
 	if err != nil {
 		return nil, err
 	}
@@ -264,12 +260,12 @@ func (c *Client) addPacket(data packet) (err error) {
 
 func (c *Client) auth() error {
 	const protocolVersionMask = 0x0000FFFF
+	const cookieLength = 256
 	cookiePath := os.Getenv("HOME") + "/.config/pulse/cookie"
 	cookie, err := ioutil.ReadFile(cookiePath)
 	if err != nil {
-		return err
+		cookie = make([]byte, cookieLength)
 	}
-	const cookieLength = 256
 	if len(cookie) != cookieLength {
 		return fmt.Errorf("pulse audio client cookie has incorrect length %d: Expected %d (path %#v)",
 			len(cookie), cookieLength, cookiePath)
